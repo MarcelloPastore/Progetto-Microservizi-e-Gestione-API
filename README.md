@@ -1,4 +1,4 @@
-# Microservizio Comunicazioni e Notifiche
+# Microservizio Comunicazioni e Notifiche (AGGIORNATO IN BASE A DOCUMENTAZIONE MIC. UTENTI E RUOLI)
 
 **Autore**: MarcelloPastore
 **Data Creazione**: 2025-05-23
@@ -46,7 +46,7 @@ Le funzionalità principali includono:
 - **Linguaggio**: Java
 - **Build Tool**: Maven
 - **Database**: SQL MariaDB
-  - *Motivazione*: Il prof ha detto così
+  - *Motivazione*: MariaDB è stato scelto come sistema di gestione di database relazionale (RDBMS) per questo microservizio in quanto è un database SQL open-source robusto, performante e ampiamente compatibile con MySQL. La familiarità con la sua architettura e il suo utilizzo pregresso nel contesto del progetto lo rendono una scelta efficiente e affidabile per la persistenza dei dati relativi a comunicazioni e notifiche.
 - **Message Broker**: RabbitMQ (per la futura gestione asincrona delle notifiche)
 
 ## Modello Dati
@@ -58,11 +58,11 @@ _DTO utilizzati per trasferire dati tra il client e il server, e potenzialmente 
 Rappresenta un messaggio scambiato tra utenti.
 ```java
 public class MessaggioDTO {
-    private Long id;
-    private Long senderId;
-    private String senderName; // Nome visualizzato del mittente
-    private Long receiverId;
-    private String receiverName; // Nome visualizzato del destinatario
+    private Long id; // ID interno del messaggio
+    private String senderId; // ID Utente (Stringa, da servizio Utenti)
+    private String senderName; // Nome visualizzato del mittente (potenzialmente da servizio Utenti o contesto evento)
+    private String receiverId; // ID Utente (Stringa, da servizio Utenti)
+    private String receiverName; // Nome visualizzato del destinatario (potenzialmente da servizio Utenti)
     private Long courseContextId; // ID del corso a cui il messaggio è associato (opzionale)
     private String subject;
     private String body;
@@ -75,8 +75,8 @@ public class MessaggioDTO {
 Rappresenta una notifica inviata a un utente.
 ```java
 public class NotificaDTO {
-    private Long id;
-    private Long userId; // ID dell'utente che riceve la notifica
+    private Long id; // ID interno della notifica
+    private String userId; // ID dell'utente che riceve la notifica (Stringa, da servizio Utenti)
     private NotificationType type; // ENUM: e.g., NEW_ASSIGNMENT, NEW_MATERIAL, EXAM_SCHEDULED, NEW_MESSAGE, GENERAL
     private String title; // Titolo breve della notifica
     private String message; // Messaggio dettagliato della notifica
@@ -91,7 +91,7 @@ public class NotificaDTO {
 DTO specifico per la creazione di un nuovo messaggio.
 ```java
 public class NuovoMessaggioRequestDTO {
-    private Long receiverId;
+    private String receiverId; // ID Utente destinatario (Stringa)
     private Long courseContextId; // Opzionale
     private String subject;
     private String body;
@@ -105,8 +105,8 @@ public class NuovoMessaggioRequestDTO {
 
 #### Messaggio (Message)
    - `id` (BIGINT, PK) - ID univoco del messaggio
-   - `sender_id` (BIGINT) - ID dell'utente mittente (riferimento a Microservizio Utenti)
-   - `receiver_id` (BIGINT) - ID dell'utente destinatario (riferimento a Microservizio Utenti)
+   - `sender_id` (VARCHAR(255)) - ID dell'utente mittente (riferimento a Microservizio Utenti)
+   - `receiver_id` (VARCHAR(255)) - ID dell'utente destinatario (riferimento a Microservizio Utenti)
    - `course_context_id` (BIGINT, nullable) - ID del corso (riferimento a Microservizio Corsi)
    - `subject` (VARCHAR(255)) - Oggetto del messaggio
    - `body` (TEXT) - Contenuto del messaggio
@@ -115,7 +115,7 @@ public class NuovoMessaggioRequestDTO {
 
 #### Notifica (Notification)
    - `id` (BIGINT, PK) - ID univoco della notifica
-   - `user_id` (BIGINT) - ID dell'utente destinatario della notifica (riferimento a Microservizio Utenti)
+   - `user_id` (VARCHAR(255)) - ID dell'utente destinatario della notifica (riferimento a Microservizio Utenti)
    - `type` (VARCHAR(50)) - Tipo di notifica (NEW_ASSIGNMENT, NEW_MATERIAL, EXAM_SCHEDULED, NEW_MESSAGE, GENERAL)
    - `title` (VARCHAR(255)) - Titolo della notifica
    - `message` (TEXT) - Testo della notifica
@@ -267,7 +267,7 @@ PUT     /read-all
 
 Il microservizio **Comunicazioni e Notifiche** interagisce con i seguenti microservizi per recuperare informazioni contestuali e per essere triggerato da eventi di sistema:
 
-- **Gestione Utenti e Ruoli**: Per ottenere ID e nomi degli utenti (mittenti/destinatari) e per indirizzare correttamente le notifiche.
+- **Gestione Utenti e Ruoli**: Per ottenere ID utente (Stringa), ruoli (es. `user`, `teach`, `admin`) dal token JWT, e potenzialmente per recuperare dettagli utente come nome e cognome tramite API.
 - **Gestione Corsi**: Per associare i messaggi a un contesto di corso specifico e per notifiche relative ai corsi.
 - **Gestione Compiti**: Per generare notifiche alla creazione di nuovi compiti o alla consegna da parte degli studenti.
 - **Gestione Materiale Didattico**: Per generare notifiche al caricamento di nuovo materiale.
@@ -289,3 +289,25 @@ _(Questa sezione verrà dettagliata quando l'implementazione di RabbitMQ per gli
 **Area in allestimento**
 
 _(Questa sezione verrà dettagliata quando l'implementazione di RabbitMQ per il consumo di eventi da altri microservizi sarà completata. Questo microservizio ascolterà eventi come `assignment.created`, `material.uploaded`, `exam.scheduled`, `feedback.provided` per generare notifiche appropriate.)_
+
+---
+
+## Sicurezza e Autorizzazioni
+
+L'accesso alle API e le funzionalità del microservizio sono regolate da autorizzazioni basate sui ruoli degli utenti (es. `user`, `teach`, `admin`), gestiti dal microservizio **Gestione Utenti e Ruoli**.
+
+- **Ruolo `teach` (Docente)**:
+    - Può inviare messaggi agli studenti iscritti ai propri corsi (`user`).
+    - Può ricevere messaggi dagli studenti dei propri corsi (`user`).
+    - Può visualizzare le proprie notifiche.
+    - Può marcare i propri messaggi e notifiche come letti.
+- **Ruolo `user` (Studente)**:
+    - Può inviare messaggi ai docenti (`teach`) dei corsi a cui è iscritto.
+    - Può ricevere messaggi dai docenti (`teach`).
+    - Può visualizzare le proprie notifiche.
+    - Può marcare i propri messaggi e notifiche come letti.
+- **Ruolo `admin` (Amministrativo)**:
+    - Potrebbe avere accesso a funzionalità di monitoraggio o invio di notifiche di sistema (da definire in base a requisiti specifici, per ora non implementato con endpoint dedicati).
+    - Riceve notifiche rilevanti per il ruolo amministrativo.
+
+Tutte le richieste API devono essere autenticate. L'identità dell'utente (ID utente dal campo `sub` del token JWT) e il suo ruolo (dal campo `role` del token JWT) vengono estratti dall'header `Authorization: Bearer <JWT_TOKEN>` per autorizzare le operazioni e personalizzare le risposte (es. recuperare solo i messaggi/notifiche dell'utente autenticato).
