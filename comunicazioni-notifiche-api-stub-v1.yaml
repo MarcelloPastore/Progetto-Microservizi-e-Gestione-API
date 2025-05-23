@@ -1,0 +1,486 @@
+openapi: 3.0.3
+info:
+  title: Comunicazioni e Notifiche API
+  version: v1.0.0
+  description: >-
+    API per il Microservizio Comunicazioni e Notifiche.
+    Responsabile della gestione dell'invio e della ricezione di messaggi tra utenti
+    e dell'invio di notifiche relative alle attività accademiche.
+  contact:
+    name: Marcello Pastore
+    # email: marcello.pastore@example.com # Inserisci la tua email se vuoi
+servers:
+  - url: http://localhost:8080/api/v1 
+    description: Server di sviluppo locale 
+  # Aggiungere altri server se necessario (es. staging, produzione)
+
+tags:
+  - name: Messaggi
+    description: Operazioni relative ai messaggi tra utenti
+  - name: Notifiche
+    description: Operazioni relative alle notifiche degli utenti
+
+components:
+  schemas:
+    MessaggioDTO:
+      type: object
+      description: Rappresenta un messaggio scambiato tra utenti.
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID interno del messaggio.
+          readOnly: true
+        senderId:
+          type: string
+          description: ID Utente mittente (Stringa, da servizio Utenti).
+        senderName:
+          type: string
+          description: Nome visualizzato del mittente (potenzialmente da servizio Utenti o contesto evento).
+          nullable: true
+        receiverId:
+          type: string
+          description: ID Utente destinatario (Stringa, da servizio Utenti).
+        receiverName:
+          type: string
+          description: Nome visualizzato del destinatario (potenzialmente da servizio Utenti).
+          nullable: true
+        courseContextId:
+          type: integer
+          format: int64
+          description: ID del corso a cui il messaggio è associato.
+          nullable: true
+        subject:
+          type: string
+          description: Oggetto del messaggio.
+        body:
+          type: string
+          description: Contenuto del messaggio.
+        timestamp:
+          type: string
+          format: date-time
+          description: Data e ora di invio.
+          readOnly: true
+        readStatus:
+          $ref: '#/components/schemas/ReadStatus'
+      required:
+        - senderId
+        - receiverId
+        - subject
+        - body
+
+    NotificaDTO:
+      type: object
+      description: Rappresenta una notifica inviata a un utente.
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID interno della notifica.
+          readOnly: true
+        userId:
+          type: string
+          description: ID dell'utente che riceve la notifica (Stringa, da servizio Utenti).
+          readOnly: true # Solitamente impostato dal sistema
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        title:
+          type: string
+          description: Titolo breve della notifica.
+        message:
+          type: string
+          description: Messaggio dettagliato della notifica.
+        referenceId:
+          type: integer
+          format: int64
+          description: ID dell'entità a cui si riferisce la notifica (es. ID compito, ID messaggio).
+          nullable: true
+        link:
+          type: string
+          description: Link diretto all'entità (es. /tasks/{referenceId}).
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Data e ora di creazione della notifica.
+          readOnly: true
+        readStatus:
+          $ref: '#/components/schemas/ReadStatus'
+      required:
+        - type
+        - title
+        - message
+
+    NuovoMessaggioRequestDTO:
+      type: object
+      description: DTO specifico per la creazione di un nuovo messaggio.
+      properties:
+        receiverId:
+          type: string
+          description: ID Utente destinatario (Stringa).
+        courseContextId:
+          type: integer
+          format: int64
+          description: ID del corso a cui il messaggio è associato (opzionale).
+          nullable: true
+        subject:
+          type: string
+          description: Oggetto del messaggio.
+        body:
+          type: string
+          description: Contenuto del messaggio.
+      required:
+        - receiverId
+        - subject
+        - body
+
+    ReadStatus:
+      type: string
+      enum:
+        - UNREAD
+        - READ
+      description: Stato di lettura di un messaggio o notifica.
+
+    NotificationType:
+      type: string
+      enum:
+        - NEW_ASSIGNMENT
+        - NEW_MATERIAL
+        - EXAM_SCHEDULED
+        - NEW_MESSAGE
+        - ASSIGNMENT_SUBMITTED
+        - FEEDBACK_RECEIVED
+        - COURSE_UPDATE
+        - GENERAL
+      description: Tipo di notifica.
+
+    PageOfMessaggioDTO:
+      type: object
+      description: Risultato paginato di MessaggioDTO.
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessaggioDTO'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        number:
+          type: integer
+          description: Numero della pagina corrente (0-indexed).
+        size:
+          type: integer
+          description: Numero di elementi per pagina.
+        # Altri campi della paginazione di Spring Data (sort, first, last, empty, etc.) possono essere aggiunti se necessario
+
+    PageOfNotificaDTO:
+      type: object
+      description: Risultato paginato di NotificaDTO.
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificaDTO'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        number:
+          type: integer
+        size:
+          type: integer
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Numero della pagina da recuperare (0-indexed).
+      required: false
+      schema:
+        type: integer
+        default: 0
+    Size:
+      name: size
+      in: query
+      description: Numero di elementi per pagina.
+      required: false
+      schema:
+        type: integer
+        default: 20
+    Sort:
+      name: sort
+      in: query
+      description: Criteri di ordinamento nel formato `property,(asc|desc)`. Default ordinamento per timestamp decrescente.
+      required: false
+      schema:
+        type: string
+        example: timestamp,desc
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        Autenticazione tramite JWT. L'ID utente e il ruolo vengono estratti dal token.
+        L'header dovrebbe essere `Authorization: Bearer <token>`.
+
+security:
+  - bearerAuth: [] # Applica JWT a tutti gli endpoint
+
+paths:
+  /messages:
+    post:
+      tags:
+        - Messaggi
+      summary: Invia un nuovo messaggio
+      description: >-
+        Permette all'utente autenticato di inviare un nuovo messaggio a un altro utente,
+        opzionalmente nel contesto di un corso.
+      operationId: sendMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NuovoMessaggioRequestDTO'
+      responses:
+        '201': # Created
+          description: Messaggio inviato con successo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessaggioDTO'
+        '400':
+          description: Richiesta non valida (es. dati mancanti, destinatario non valido).
+        '401':
+          description: Non autorizzato (token mancante o non valido).
+        '403':
+          description: Accesso negato (es. tentativo di inviare a nome di altri).
+
+  /messages/inbox:
+    get:
+      tags:
+        - Messaggi
+      summary: Recupera la casella di posta in arrivo
+      description: >-
+        Recupera i messaggi ricevuti dall'utente autenticato, paginati e
+        ordinati per data decrescente di default.
+      operationId: getInboxMessages
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: Lista paginata dei messaggi in arrivo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfMessaggioDTO'
+        '401':
+          description: Non autorizzato.
+
+  /messages/sent:
+    get:
+      tags:
+        - Messaggi
+      summary: Recupera i messaggi inviati
+      description: >-
+        Recupera i messaggi inviati dall'utente autenticato, paginati e
+        ordinati per data decrescente di default.
+      operationId: getSentMessages
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: Lista paginata dei messaggi inviati.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfMessaggioDTO'
+        '401':
+          description: Non autorizzato.
+
+  /messages/{messageId}:
+    get:
+      tags:
+        - Messaggi
+      summary: Recupera un messaggio specifico tramite ID
+      description: >-
+        Recupera i dettagli di un messaggio specifico. L'utente autenticato
+        deve essere il mittente o il destinatario del messaggio.
+      operationId: getMessageById
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: ID del messaggio da recuperare.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Dettagli del messaggio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessaggioDTO'
+        '401':
+          description: Non autorizzato.
+        '403':
+          description: Accesso negato (l'utente non è mittente né destinatario).
+        '404':
+          description: Messaggio non trovato.
+
+  /messages/{messageId}/read:
+    put:
+      tags:
+        - Messaggi
+      summary: Segna un messaggio come letto
+      description: >-
+        Permette all'utente autenticato (se destinatario) di segnare
+        un messaggio specifico come letto.
+      operationId: markMessageAsRead
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: ID del messaggio da segnare come letto.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Messaggio segnato come letto con successo.
+        '401':
+          description: Non autorizzato.
+        '403':
+          description: Accesso negato (l'utente non è il destinatario).
+        '404':
+          description: Messaggio non trovato.
+
+  /messages/course/{courseId}:
+    get:
+      tags:
+        - Messaggi
+      summary: Recupera i messaggi relativi a un corso specifico
+      description: >-
+        Recupera i messaggi (inviati o ricevuti dall'utente autenticato)
+        relativi a un ID corso specifico, paginati.
+      operationId: getMessagesByCourse
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          description: ID del corso per cui recuperare i messaggi.
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: Lista paginata dei messaggi per il corso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfMessaggioDTO'
+        '401':
+          description: Non autorizzato.
+        '404':
+          description: Corso non trovato o nessun messaggio per l'utente in quel corso.
+
+  /notifications:
+    get:
+      tags:
+        - Notifiche
+      summary: Recupera le notifiche per l'utente autenticato
+      description: >-
+        Recupera le notifiche per l'utente autenticato, paginate e ordinate
+        per data decrescente di default. Può essere filtrato per stato di lettura.
+      operationId: getUserNotifications
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+        - name: readStatus
+          in: query
+          required: false
+          description: Filtra le notifiche per stato di lettura.
+          schema:
+            $ref: '#/components/schemas/ReadStatus'
+      responses:
+        '200':
+          description: Lista paginata delle notifiche.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfNotificaDTO'
+        '401':
+          description: Non autorizzato.
+
+  /notifications/unread/count:
+    get:
+      tags:
+        - Notifiche
+      summary: Recupera il conteggio delle notifiche non lette
+      description: >-
+        Restituisce il numero di notifiche non lette per l'utente autenticato.
+      operationId: getUnreadNotificationsCount
+      responses:
+        '200':
+          description: Conteggio delle notifiche non lette.
+          content:
+            application/json: # O text/plain a seconda di come lo implementi
+              schema:
+                type: integer
+                format: int64
+        '401':
+          description: Non autorizzato.
+
+  /notifications/{notificationId}/read:
+    put:
+      tags:
+        - Notifiche
+      summary: Segna una notifica specifica come letta
+      description: >-
+        Permette all'utente autenticato di segnare una sua notifica specifica come letta.
+      operationId: markNotificationAsRead
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          description: ID della notifica da segnare come letta.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Notifica segnata come letta con successo.
+        '401':
+          description: Non autorizzato.
+        '403':
+          description: Accesso negato (la notifica non appartiene all'utente).
+        '404':
+          description: Notifica non trovata.
+
+  /notifications/read-all:
+    put:
+      tags:
+        - Notifiche
+      summary: Segna tutte le notifiche non lette come lette
+      description: >-
+        Permette all'utente autenticato di segnare tutte le sue notifiche non lette come lette.
+      operationId: markAllNotificationsAsRead
+      responses:
+        '204':
+          description: Tutte le notifiche non lette sono state segnate come lette.
+        '401':
+          description: Non autorizzato.

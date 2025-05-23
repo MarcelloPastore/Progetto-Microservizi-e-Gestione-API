@@ -30,7 +30,7 @@
 ---
 
 ## Panoramica
-Questo Microservizio è responsabile della gestione dell'invio e della ricezione di messaggi tra utenti (studenti e docenti) e dell'invio di notifiche relative alle attività accademiche all'interno della piattaforma.
+Questo Microservizio è responsabile della gestione dell'invio e della ricezione di messaggi tra utenti (studenti e docenti) e dell'invio di notifiche relative alle attività accademiche all'interno della piattaforma. Si può visionare il Progetto tramite Swagger scaricando il file 'comunicazioni-notifiche-api-stub-v1,yaml' ed inserirlo nel sito [SwaggerEditor] (https://editor.swagger.io/). 
 
 Le funzionalità principali includono:
 - **(Studenti e Docenti)** Invio e ricezione di messaggi diretti all'interno del contesto di specifici corsi.
