@@ -6,8 +6,9 @@
 
 ## Indice
 1. [Panoramica](#panoramica)
-2. [Tech Stack](#tech-stack)
-3. [Modello Dati](#modello-dati)
+2. [Contesto Applicativo & Scope](#contesto-applicativo--scope)
+3. [Tech Stack](#tech-stack)
+4. [Modello Dati](#modello-dati)
    - [DTO (Data Transfer Objects)](#dto)
      - [MessaggioDTO](#messaggiodto)
      - [NotificaDTO](#notificadto)
@@ -18,14 +19,10 @@
    - [Enumerazioni](#enumerazioni)
      - [TipoNotifica (NotificationType)](#tiponotifica-notificationtype)
      - [StatoLettura (ReadStatus)](#statolettura-readstatus)
-4. [API REST](#api-rest)
-    - [Messaggi Endpoint](#messaggi-endpoint)
-    - [Notifiche Endpoint](#notifiche-endpoint)
-5. [Integrazione Microservizi Esterni](#integrazione-microservizi-esterni)
-   - [Panoramica Generale](#panoramica-generale)
-   - [RabbitMQ - Published Events](#rabbitmq---published-events)
-   - [RabbitMQ - Consumed Events](#rabbitmq---consumed-events)
-6. [Sicurezza e Autorizzazioni](#sicurezza-e-autorizzazioni)
+5. [API REST](#api-rest)
+6. [Integrazione Microservizi Esterni](#integrazione-microservizi-esterni)
+7. [Sicurezza e Autorizzazioni](#sicurezza-e-autorizzazioni)
+8. [Accesso Swagger / OpenAPI](#accesso-swagger--openapi)
 
 ---
 
@@ -40,6 +37,13 @@ Le funzionalità principali includono:
     - Pianificazione o aggiornamenti di esami.
     - Ricezione di nuovi messaggi.
     - Altri eventi rilevanti della piattaforma.
+
+## Contesto Applicativo & Scope
+Questo repository fa parte di una piattaforma universitaria più ampia composta da molteplici microservizi (Corsi, Materiale Didattico, Compiti, Esami, Utenti & Ruoli, Presenze, Feedback, Pianificazione Orari, Iscrizioni, Reportistica, Tasse, Help Desk, Biblioteca, ecc.).
+Questo microservizio copre esclusivamente:
+- Scambio di messaggi tra utenti (studenti / docenti) con riferimento opzionale a un corso.
+- Generazione e consultazione di notifiche (es. nuova ricezione messaggio).
+Tutto il resto (autenticazione reale, validazioni ruoli, eventi esterni, orchestrazione) è demandato ai microservizi dedicati o sarà oggetto di evoluzioni future.
 
 ## Tech Stack
 - **Framework**: Spring Boot
@@ -311,3 +315,14 @@ L'accesso alle API e le funzionalità del microservizio sono regolate da autoriz
     - Riceve notifiche rilevanti per il ruolo amministrativo.
 
 Tutte le richieste API devono essere autenticate. L'identità dell'utente (ID utente dal campo `sub` del token JWT) e il suo ruolo (dal campo `role` del token JWT) vengono estratti dall'header `Authorization: Bearer <JWT_TOKEN>` per autorizzare le operazioni e personalizzare le risposte (es. recuperare solo i messaggi/notifiche dell'utente autenticato).
+
+---
+
+## Accesso Swagger / OpenAPI
+Dopo aver clonato il repository ed avviato l’app (mvn spring-boot:run), è possibile esplorare e testare le API via interfaccia Swagger:
+
+- UI: http://localhost:8080/swagger-ui
+- Documentazione JSON: http://localhost:8080/api-docs
+- (Opzionale) Puoi anche caricare manualmente il file comunicazioni-notifiche-api-stub-v1.yaml su https://editor.swagger.io
+
+Per provare gli endpoint è sufficiente inserire l’header X-User-Id (es. alice, bob) dove richiesto.
