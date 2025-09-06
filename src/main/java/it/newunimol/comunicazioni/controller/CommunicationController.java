@@ -18,24 +18,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import it.newunimol.comunicazioni.dto.NuovoMessaggioRequestDTO;
 import it.newunimol.comunicazioni.model.Messaggio;
-import it.newunimol.comunicazioni.model.Notifica;
-import it.newunimol.comunicazioni.model.NotificationType;
-import it.newunimol.comunicazioni.model.ReadStatus;
-import it.newunimol.comunicazioni.repository.MessaggioRepository;
-import it.newunimol.comunicazioni.repository.NotificaRepository;
+import it.newunimol.comunicazioni.service.MessageService;
 
 @RestController
 @RequestMapping("/api/v1/messages")
 public class CommunicationController {
 
-    private final MessaggioRepository messaggioRepository;
-    private final NotificaRepository notificaRepository;
+    private final MessageService messageService;
 
     @Autowired
-    public CommunicationController(MessaggioRepository messaggioRepository,
-                                   NotificaRepository notificaRepository) {
-        this.messaggioRepository = messaggioRepository;
-        this.notificaRepository = notificaRepository;
+    public CommunicationController(MessageService messageService) {
+        this.messageService = messageService;
     }
 
     // POST /
@@ -45,32 +38,12 @@ public class CommunicationController {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Header X-User-Id mancante (stub auth).");
         }
-        if (body.getReceiverId() == null || body.getReceiverId().isBlank()
-                || body.getSubject() == null || body.getSubject().isBlank()
-                || body.getBody() == null || body.getBody().isBlank()) {
+        if (body.receiverId() == null || body.receiverId().isBlank()
+                || body.subject() == null || body.subject().isBlank()
+                || body.body() == null || body.body().isBlank()) {
             return ResponseEntity.badRequest().body("Campi obbligatori mancanti.");
         }
-
-        Messaggio m = new Messaggio(userId,
-                body.getReceiverId(),
-                body.getCourseContextId(),
-                body.getSubject(),
-                body.getBody());
-        m.setReadStatus(ReadStatus.UNREAD);
-        Messaggio salvato = messaggioRepository.save(m);
-
-        // CREA NOTIFICA SEMPLICE PER IL DESTINATARIO
-        Notifica notifica = new Notifica(
-                body.getReceiverId(),
-                NotificationType.NEW_MESSAGE,
-                "Nuovo messaggio",
-                body.getSubject() != null ? body.getSubject() : "Hai ricevuto un nuovo messaggio",
-                salvato.getId(),           // referenceId = id messaggio
-                "/messages/" + salvato.getId()
-        );
-        notificaRepository.save(notifica);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(salvato);
+        return ResponseEntity.status(HttpStatus.CREATED).body(messageService.sendMessage(userId, body));
     }
 
     // GET /inbox
@@ -80,7 +53,7 @@ public class CommunicationController {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Header X-User-Id mancante (stub auth).");
         }
-        Page<Messaggio> page = messaggioRepository.findByReceiverId(userId, pageable);
+        Page<Messaggio> page = messageService.inbox(userId, pageable);
         return ResponseEntity.ok(page);
     }
 
@@ -91,7 +64,7 @@ public class CommunicationController {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Header X-User-Id mancante (stub auth).");
         }
-        Page<Messaggio> page = messaggioRepository.findBySenderId(userId, pageable);
+        Page<Messaggio> page = messageService.sent(userId, pageable);
         return ResponseEntity.ok(page);
     }
 
@@ -102,14 +75,9 @@ public class CommunicationController {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Header X-User-Id mancante (stub auth).");
         }
-        return messaggioRepository.findById(id)
-                .map(m -> {
-                    if (!m.getSenderId().equals(userId) && !m.getReceiverId().equals(userId)) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accesso negato.");
-                    }
-                    return ResponseEntity.ok(m);
-                })
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Messaggio non trovato."));
+        return messageService.findVisible(userId, id)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Messaggio non trovato o accesso negato."));
     }
 
     // PUT /{id}/read
@@ -119,18 +87,12 @@ public class CommunicationController {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Header X-User-Id mancante (stub auth).");
         }
-        return messaggioRepository.findById(id)
-                .map(m -> {
-                    if (!m.getReceiverId().equals(userId)) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Solo il destinatario può marcare come letto.");
-                    }
-                    if (m.getReadStatus() != ReadStatus.READ) {
-                        m.setReadStatus(ReadStatus.READ);
-                        messaggioRepository.save(m);
-                    }
-                    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-                })
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Messaggio non trovato."));
+        boolean ok = messageService.markRead(userId, id);
+        if (!ok) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Solo il destinatario può marcare come letto o messaggio inesistente.");
+        }
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     // GET /course/{courseId}
@@ -141,7 +103,7 @@ public class CommunicationController {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Header X-User-Id mancante (stub auth).");
         }
-        Page<Messaggio> page = messaggioRepository.findByCourseAndUser(courseId, userId, pageable);
+        Page<Messaggio> page = messageService.byCourse(userId, courseId, pageable);
         return ResponseEntity.ok(page);
     }
 }

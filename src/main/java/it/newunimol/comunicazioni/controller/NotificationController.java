@@ -1,7 +1,5 @@
 package it.newunimol.comunicazioni.controller;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,17 +17,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import it.newunimol.comunicazioni.model.Notifica;
 import it.newunimol.comunicazioni.model.ReadStatus;
-import it.newunimol.comunicazioni.repository.NotificaRepository;
+import it.newunimol.comunicazioni.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
 public class NotificationController {
 
-    private final NotificaRepository notificaRepository;
+    private final NotificationService notificationService;
 
     @Autowired
-    public NotificationController(NotificaRepository notificaRepository) {
-        this.notificaRepository = notificaRepository;
+    public NotificationController(NotificationService notificationService) {
+        this.notificationService = notificationService;
     }
 
     // GET /
@@ -40,9 +38,7 @@ public class NotificationController {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Header X-User-Id mancante (stub auth).");
         }
-        Page<Notifica> page = (readStatus == null)
-                ? notificaRepository.findByUserId(userId, pageable)
-                : notificaRepository.findByUserIdAndReadStatus(userId, readStatus, pageable);
+        Page<Notifica> page = notificationService.getNotifications(userId, readStatus, pageable);
         return ResponseEntity.ok(page);
     }
 
@@ -52,8 +48,7 @@ public class NotificationController {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Header X-User-Id mancante (stub auth).");
         }
-        long count = notificaRepository.countByUserIdAndReadStatus(userId, ReadStatus.UNREAD);
-        return ResponseEntity.ok(count);
+        return ResponseEntity.ok(notificationService.countUnread(userId));
     }
 
     // PUT /{id}/read
@@ -63,31 +58,19 @@ public class NotificationController {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Header X-User-Id mancante (stub auth).");
         }
-        return notificaRepository.findById(id)
-                .map(n -> {
-                    if (!n.getUserId().equals(userId)) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accesso negato.");
-                    }
-                    if (n.getReadStatus() != ReadStatus.READ) {
-                        n.setReadStatus(ReadStatus.READ);
-                        notificaRepository.save(n);
-                    }
-                    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-                })
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Notifica non trovata."));
+        boolean ok = notificationService.markRead(userId, id);
+        if (!ok) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accesso negato o notifica inesistente.");
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
+    // PUT /read-all
     // PUT /read-all
     @PutMapping("/read-all")
     public ResponseEntity<?> markAllRead(@RequestHeader(value = "X-User-Id", required = false) String userId) {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Header X-User-Id mancante (stub auth).");
         }
-        List<Notifica> unread = notificaRepository.findByUserIdAndReadStatus(userId, ReadStatus.UNREAD);
-        if (!unread.isEmpty()) {
-            unread.forEach(n -> n.setReadStatus(ReadStatus.READ));
-            notificaRepository.saveAll(unread);
-        }
+        notificationService.markAllRead(userId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
