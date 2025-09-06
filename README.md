@@ -1,5 +1,4 @@
-# Microservizio Comunicazioni e Notifiche (AGGIORNATO IN BASE A DOCUMENTAZIONE MIC. UTENTI E RUOLI)
-
+# Microservizio Comunicazioni e Notifiche 
 **Autore**: MarcelloPastore
 **Data Creazione**: 2025-05-23
 **Data Ultima Modifica**: 2025-09-06
@@ -27,7 +26,7 @@
 ---
 
 ## Panoramica (Versione 1.1.0)
-Questo Microservizio è responsabile della gestione dell'invio e della ricezione di messaggi tra utenti (studenti e docenti) e dell'invio di notifiche relative alle attività accademiche all'interno della piattaforma. Si può visionare il Progetto tramite Swagger scaricando il file 'comunicazioni-notifiche-api-stub-v1,yaml' ed inserirlo nel sito [SwaggerEditor] (https://editor.swagger.io/). 
+Questo Microservizio è responsabile della gestione dell'invio e della ricezione di messaggi tra utenti (studenti e docenti) e dell'invio di notifiche relative alle attività accademiche all'interno della piattaforma.  
 
 Le funzionalità principali includono:
 - **(Studenti e Docenti)** Invio e ricezione di messaggi diretti all'interno del contesto di specifici corsi.
@@ -51,7 +50,7 @@ Tutto il resto (autenticazione reale, validazioni ruoli, eventi esterni, orchest
 - **Build Tool**: Maven
 - **Database**: SQL MariaDB
   - *Motivazione*: MariaDB è stato scelto come sistema di gestione di database relazionale (RDBMS) per questo microservizio in quanto è un database SQL open-source robusto, performante e ampiamente compatibile con MySQL. La familiarità con la sua architettura e il suo utilizzo pregresso nel contesto del progetto lo rendono una scelta efficiente e affidabile per la persistenza dei dati relativi a comunicazioni e notifiche.
-- **Message Broker**: RabbitMQ (per la futura gestione asincrona delle notifiche)
+- **Message Broker**: RabbitMQ (per la gestione asincrona delle notifiche)
 
 ## Modello Dati
 
@@ -276,7 +275,6 @@ Il microservizio **Comunicazioni e Notifiche** interagisce con i seguenti micros
 - **Gestione Compiti**: Per generare notifiche alla creazione di nuovi compiti o alla consegna da parte degli studenti.
 - **Gestione Materiale Didattico**: Per generare notifiche al caricamento di nuovo materiale.
 - **Gestione Esami**: Per generare notifiche relative alla pianificazione o modifica degli esami.
-- **Valutazione e Feedback**: Per generare notifiche quando un feedback è disponibile per uno studente.
 
 ---
 
