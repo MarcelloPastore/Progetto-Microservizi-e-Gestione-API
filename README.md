@@ -2,7 +2,7 @@
 
 **Autore**: MarcelloPastore
 **Data Creazione**: 2025-05-23
-**Data Ultima Modifica**: 2025-05-23
+**Data Ultima Modifica**: 2025-09-06
 
 ## Indice
 1. [Panoramica](#panoramica)
@@ -26,7 +26,7 @@
 
 ---
 
-## Panoramica
+## Panoramica (Versione 1.1.0)
 Questo Microservizio è responsabile della gestione dell'invio e della ricezione di messaggi tra utenti (studenti e docenti) e dell'invio di notifiche relative alle attività accademiche all'interno della piattaforma. Si può visionare il Progetto tramite Swagger scaricando il file 'comunicazioni-notifiche-api-stub-v1,yaml' ed inserirlo nel sito [SwaggerEditor] (https://editor.swagger.io/). 
 
 Le funzionalità principali includono:
@@ -325,4 +325,11 @@ Dopo aver clonato il repository ed avviato l’app (mvn spring-boot:run), è pos
 - Documentazione JSON: http://localhost:8080/api-docs
 - (Opzionale) Puoi anche caricare manualmente il file comunicazioni-notifiche-api-stub-v1.yaml su https://editor.swagger.io
 
-Per provare gli endpoint è sufficiente inserire l’header X-User-Id (es. alice, bob) dove richiesto.
+Autenticazione su Swagger: cliccare "Authorize" e incollare il JWT (senza prefisso Bearer). Le richieste useranno automaticamente l'intestazione Authorization: Bearer <token>. Versione API: 1.1.0.
+
+Dev profile endpoints utili:
+- POST /api/v1/dev/users {"userId":"alice","role":"student"}
+- PATCH /api/v1/dev/users/{userId}/role {"role":"teacher"}
+- POST /api/v1/dev/events/broadcast per simulare un evento piattaforma.
+
+Broadcast notifiche: ogni evento Rabbit MQ (code materiale/compiti/esami) genera notifiche per tutti gli utenti tranne quelli con role=teacher. Modificare la logica in PlatformEventListener se necessario.

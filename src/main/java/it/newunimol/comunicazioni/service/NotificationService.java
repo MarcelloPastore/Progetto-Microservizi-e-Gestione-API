@@ -35,7 +35,9 @@ public class NotificationService {
         for (String uid : userIds) {
             list.add(new Notifica(uid, type, title, message, referenceId, link));
         }
-        return notificaRepository.saveAll(list);
+    List<Notifica> saved = notificaRepository.saveAll(list);
+    System.out.println("[NOTIFICHE] Salvate " + saved.size() + " notifiche (type=" + type + ")");
+    return saved;
     }
 
     public Page<Notifica> getNotifications(String userId, ReadStatus rs, Pageable pageable) {

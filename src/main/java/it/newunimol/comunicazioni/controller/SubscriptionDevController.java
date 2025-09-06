@@ -1,14 +1,20 @@
 package it.newunimol.comunicazioni.controller;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import it.newunimol.comunicazioni.model.CourseSubscription;
 import it.newunimol.comunicazioni.repository.CourseSubscriptionRepository;
-
-import java.util.List;
 
 /**
  * Controller SOLO per facilitare i test locali (inserire iscrizioni senza aprire il DB).
@@ -21,6 +27,7 @@ public class SubscriptionDevController {
 
     private final CourseSubscriptionRepository repository;
 
+    @Autowired
     public SubscriptionDevController(CourseSubscriptionRepository repository) {
         this.repository = repository;
     }
