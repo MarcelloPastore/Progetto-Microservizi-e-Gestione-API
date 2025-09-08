@@ -24,6 +24,7 @@ import it.newunimol.comunicazioni.model.Notifica;
 import it.newunimol.comunicazioni.model.ReadStatus;
 import it.newunimol.comunicazioni.security.CurrentUserService;
 import it.newunimol.comunicazioni.service.NotificationService;
+import it.newunimol.comunicazioni.service.UserRegistryService;
 
 @RestController
 @SecurityRequirement(name = "bearer-jwt")
@@ -32,11 +33,13 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     private final CurrentUserService currentUserService;
+    private final UserRegistryService userRegistryService;
 
     @Autowired
-    public NotificationController(NotificationService notificationService, CurrentUserService currentUserService) {
+    public NotificationController(NotificationService notificationService, CurrentUserService currentUserService, UserRegistryService userRegistryService) {
         this.notificationService = notificationService;
         this.currentUserService = currentUserService;
+        this.userRegistryService = userRegistryService;
     }
 
     // GET /
@@ -51,7 +54,8 @@ public class NotificationController {
                           @PageableDefault(size = 10, sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable) {
         String userId = currentUserService.userId();
         if (userId == null || userId.isBlank()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utente non autenticato.");
-        Page<Notifica> page = notificationService.getNotifications(userId, readStatus, pageable);
+    userRegistryService.ensureUser(userId, currentUserService.role());
+    Page<Notifica> page = notificationService.getNotifications(userId, readStatus, pageable);
         return ResponseEntity.ok(page);
     }
 
@@ -65,7 +69,8 @@ public class NotificationController {
     public ResponseEntity<?> unreadCount() {
         String userId = currentUserService.userId();
         if (userId == null || userId.isBlank()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utente non autenticato.");
-        return ResponseEntity.ok(notificationService.countUnread(userId));
+    userRegistryService.ensureUser(userId, currentUserService.role());
+    return ResponseEntity.ok(notificationService.countUnread(userId));
     }
 
     // PUT /{id}/read

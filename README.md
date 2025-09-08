@@ -1,7 +1,7 @@
 # Microservizio Comunicazioni e Notifiche 
 **Autore**: MarcelloPastore
 **Data Creazione**: 2025-05-23
-**Data Ultima Modifica**: 2025-09-06
+**Data Ultima Modifica**: 2025-09-08
 
 ## Indice
 1. [Panoramica](#panoramica)
@@ -25,7 +25,7 @@
 
 ---
 
-## Panoramica (Versione 1.1.0)
+## Panoramica (Versione 1.1.2)
 Questo Microservizio è responsabile della gestione dell'invio e della ricezione di messaggi tra utenti (studenti e docenti) e dell'invio di notifiche relative alle attività accademiche all'interno della piattaforma.  
 
 Le funzionalità principali includono:
@@ -323,7 +323,14 @@ Dopo aver clonato il repository ed avviato l’app (mvn spring-boot:run), è pos
 - Documentazione JSON: http://localhost:8080/api-docs
 - (Opzionale) Puoi anche caricare manualmente il file comunicazioni-notifiche-api-stub-v1.yaml su https://editor.swagger.io
 
-Autenticazione su Swagger: cliccare "Authorize" e incollare il JWT (senza prefisso Bearer). Le richieste useranno automaticamente l'intestazione Authorization: Bearer <token>. Versione API: 1.1.0.
+Autenticazione su Swagger: cliccare "Authorize" e incollare il JWT (senza prefisso Bearer). Le richieste useranno automaticamente l'intestazione Authorization: Bearer <token>. Versione API: 1.1.2.
+
+### Novità dalla 1.1.0 alla 1.1.2
+- Auto-registrazione utente: al primo accesso con un nuovo JWT viene creato automaticamente un record `UserAccount` (ruolo default `student` se non presente) senza necessità di endpoint separati.
+- Limitazione sicurezza mittente: il campo opzionale `senderId` nel body di creazione messaggio è ignorato in ambienti non `dev` — in produzione il mittente coincide sempre con il `sub` del token.
+- Test minimal: aggiunti test puri JUnit sui model (`Messaggio`, `Notifica`, `UserAccount`) senza caricare il contesto Spring per mantenere semplicità.
+
+> NOTA: Gli endpoint `dev` restano disponibili solo con profilo attivo e servono per simulazioni manuali (creazione utenti, broadcast eventi). In produzione non abilitarli.
 
 Dev profile endpoints utili:
 - POST /api/v1/dev/users {"userId":"alice","role":"student"}

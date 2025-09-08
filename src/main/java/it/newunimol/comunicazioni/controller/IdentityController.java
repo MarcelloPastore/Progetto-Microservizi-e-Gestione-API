@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import it.newunimol.comunicazioni.security.CurrentUserService;
+import it.newunimol.comunicazioni.service.UserRegistryService;
 
 @RestController
 @SecurityRequirement(name = "bearer-jwt")
@@ -21,10 +22,12 @@ import it.newunimol.comunicazioni.security.CurrentUserService;
 public class IdentityController {
 
     private final CurrentUserService currentUserService;
+    private final UserRegistryService userRegistryService;
 
     @Autowired
-    public IdentityController(CurrentUserService currentUserService) {
+    public IdentityController(CurrentUserService currentUserService, UserRegistryService userRegistryService) {
         this.currentUserService = currentUserService;
+        this.userRegistryService = userRegistryService;
     }
 
     @Operation(summary = "Identità utente", description = "Restituisce userId e ruolo estratti dal token JWT.")
@@ -33,7 +36,8 @@ public class IdentityController {
     public ResponseEntity<?> me() {
         String userId = currentUserService.userId();
         if (userId == null) return ResponseEntity.status(401).body("Non autenticato");
-        return ResponseEntity.ok(Map.of(
+    userRegistryService.ensureUser(userId, currentUserService.role());
+    return ResponseEntity.ok(Map.of(
                 "userId", userId,
                 "role", currentUserService.role()
         ));

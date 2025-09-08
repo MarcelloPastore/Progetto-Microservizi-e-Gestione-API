@@ -1,6 +1,8 @@
 package it.newunimol.comunicazioni.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -26,6 +28,7 @@ import it.newunimol.comunicazioni.dto.NuovoMessaggioRequestDTO;
 import it.newunimol.comunicazioni.model.Messaggio;
 import it.newunimol.comunicazioni.security.CurrentUserService;
 import it.newunimol.comunicazioni.service.MessageService;
+import it.newunimol.comunicazioni.service.UserRegistryService;
 
 @RestController
 @SecurityRequirement(name = "bearer-jwt")
@@ -34,11 +37,15 @@ public class CommunicationController {
 
     private final MessageService messageService;
     private final CurrentUserService currentUserService;
+    private final UserRegistryService userRegistryService;
+    private final Environment environment;
 
     @Autowired
-    public CommunicationController(MessageService messageService, CurrentUserService currentUserService) {
+    public CommunicationController(MessageService messageService, CurrentUserService currentUserService, Environment environment, UserRegistryService userRegistryService) {
         this.messageService = messageService;
         this.currentUserService = currentUserService;
+        this.environment = environment;
+        this.userRegistryService = userRegistryService;
     }
 
     // POST /
@@ -54,8 +61,17 @@ public class CommunicationController {
         String authenticated = currentUserService.userId();
         if (authenticated == null || authenticated.isBlank()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utente non autenticato.");
 
-        // Se il client fornisce senderId lo usiamo, altrimenti usiamo l'utente autenticato
-        String effectiveSender = (body.senderId() != null && !body.senderId().isBlank()) ? body.senderId() : authenticated;
+    boolean devProfile = environment.acceptsProfiles(Profiles.of("dev"));
+    // autoregistra mittente nel repository utenti se assente
+    userRegistryService.ensureUser(authenticated, currentUserService.role());
+        String effectiveSender = authenticated;
+        if (body.senderId() != null && !body.senderId().isBlank()) {
+            if (devProfile && !body.senderId().equals(authenticated)) {
+                effectiveSender = body.senderId(); // consentito solo in dev
+            } else if (!devProfile && !body.senderId().equals(authenticated)) {
+                return ResponseEntity.badRequest().body("Override senderId non consentito fuori dal profilo dev");
+            }
+        }
 
         if (body.receiverId() == null || body.receiverId().isBlank()
                 || body.subject() == null || body.subject().isBlank()

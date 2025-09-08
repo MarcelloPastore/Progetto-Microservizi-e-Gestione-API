@@ -11,8 +11,8 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 @OpenAPIDefinition(
         info = @Info(
                 title = "Comunicazioni & Notifiche API",
-                version = "1.1.0",
-                description = "API per gestione messaggi privati e notifiche piattaforma (versione 1.1.0).\n\n" +
+                version = "1.1.2",
+                description = "API per gestione messaggi privati e notifiche piattaforma (versione 1.1.2).\n\n" +
                         "Funzionalità principali:\n" +
                         "- Invio e ricezione messaggi tra utenti autenticati (JWT)\n" +
                         "- Notifiche automatiche generate da eventi RabbitMQ (materiale, compiti, esami, ecc.)\n" +
