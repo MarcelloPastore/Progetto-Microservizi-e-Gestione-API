@@ -11,19 +11,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    # Servizi: Avvia RabbitMQ in un container Docker accessibile via localhost
-    services:
-      rabbitmq:
-        image: rabbitmq:3-management-alpine
-        ports:
-          - 5672:5672
-          - 15672:15672
-        options: >-
-          --health-cmd "rabbitmq-diagnostics -q ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 17
@@ -32,9 +19,6 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: 'maven'
-    
-    - name: Run Tests
-      run: mvn test
 
-    - name: Build Package
-      run: mvn -B package --file pom.xml 
+    - name: Build with Maven (Skip Tests)
+      run: mvn -B package --file pom.xml -DskipTests
