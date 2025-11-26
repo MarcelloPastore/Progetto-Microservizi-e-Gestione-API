@@ -21,4 +21,4 @@ jobs:
         cache: 'maven'
 
     - name: Build with Maven (Skip Tests)
-      run: mvn -B package --file pom.xml -DskipTests
+      run: mvn -B package --file pom.xml 
