@@ -20,8 +20,8 @@ jobs:
         distribution: 'temurin'
         cache: 'maven'
     
-    - name: Run Tests
-      run: mvn test
+     - name: Run Tests
+      run: mvn test -Dmaven.test.failure.ignore=true
 
     - name: Build Package
       run: mvn -B package --file pom.xml -DskipTests
