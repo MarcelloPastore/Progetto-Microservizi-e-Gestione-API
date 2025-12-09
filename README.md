@@ -48,9 +48,67 @@ Tutto il resto (autenticazione reale, validazioni ruoli, eventi esterni, orchest
 - **Framework**: Spring Boot
 - **Linguaggio**: Java
 - **Build Tool**: Maven
+- **Containerizzazione**: Docker & Docker Compose
+- **CI/CD**: GitHub Actions
+- **Quality Assurance**:
+  - **JaCoCo**: Code Coverage
+  - **Checkstyle**: Code Style Analysis
+  - **SpotBugs**: Static Analysis for Bugs
+  - **PMD**: Source Code Analyzer
 - **Database**: SQL MariaDB
   - *Motivazione*: MariaDB è stato scelto come sistema di gestione di database relazionale (RDBMS) per questo microservizio in quanto è un database SQL open-source robusto, performante e ampiamente compatibile con MySQL. La familiarità con la sua architettura e il suo utilizzo pregresso nel contesto del progetto lo rendono una scelta efficiente e affidabile per la persistenza dei dati relativi a comunicazioni e notifiche.
 - **Message Broker**: RabbitMQ (per la gestione asincrona delle notifiche)
+
+## Setup e Avvio con Docker
+
+Per avviare il progetto in locale utilizzando Docker, seguire questi passaggi:
+
+1.  **Clonare il repository**.
+2.  **Configurare le variabili d'ambiente**:
+    Il file `.env` contenente le password non è incluso nel repository per sicurezza.
+    Creare un file `.env` nella root del progetto copiando il template fornito:
+    ```bash
+    cp .env.example .env
+    ```
+    (Opzionale) Modificare il file `.env` con le proprie password se necessario.
+3.  **Avviare i container**:
+    ```bash
+    docker-compose up --build
+    ```
+    Questo avvierà:
+    - Il microservizio (porta 8080)
+    - MariaDB (porta 3306)
+    - RabbitMQ (porta 5672, UI gestione su 15672)
+
+## CI/CD & Quality Assurance
+
+Il progetto utilizza **GitHub Actions** per l'automazione dei processi di build, test e release.
+
+### Workflow Configurati
+1.  **Java CI with Maven** (`maven.yml`):
+    - Si attiva ad ogni push o pull request su `main`.
+    - Esegue la build del progetto.
+    - Esegue i test unitari.
+    - Esegue l'analisi statica del codice con Checkstyle, SpotBugs e PMD.
+    - Genera il report di coverage con JaCoCo.
+
+2.  **Create Release on Version Update** (`release.yml`):
+    - Si attiva quando un commit message contiene la parola "update" (case-insensitive) e un numero di versione (es. `1.2.3`).
+    - Esempio messaggio commit: `Update 1.2.3: fix bug importanti`.
+    - Crea automaticamente una Release su GitHub taggata con la versione specificata (es. `v1.2.3`).
+
+### Analisi Statica e Test
+Per eseguire manualmente i controlli di qualità in locale:
+```bash
+./mvnw clean install
+```
+Questo comando eseguirà:
+- Compilazione
+- Test Unitari
+- Checkstyle (verifica stile codice Google)
+- SpotBugs (ricerca bug potenziali)
+- PMD (analisi qualità codice)
+- JaCoCo (report coverage in `target/site/jacoco/index.html`)
 
 ## Modello Dati
 
@@ -338,3 +396,22 @@ Dev profile endpoints utili:
 - POST /api/v1/dev/events/broadcast per simulare un evento piattaforma.
 
 Broadcast notifiche: ogni evento Rabbit MQ (code materiale/compiti/esami) genera notifiche per tutti gli utenti tranne quelli con role=teacher. Modificare la logica in PlatformEventListener se necessario.
+
+---
+
+## Setup e Avvio con Docker
+
+Per avviare il progetto in locale utilizzando Docker, seguire questi passaggi:
+
+1.  **Clonare il repository**.
+2.  **Configurare le variabili d'ambiente**:
+    Il file `.env` contenente le password non è incluso nel repository per sicurezza.
+    Creare un file `.env` nella root del progetto copiando il template fornito:
+    ```bash
+    cp .env.example .env
+    ```
+    (Opzionale) Modificare il file `.env` con le proprie password se necessario.
+3.  **Avviare i container**:
+    ```bash
+    docker-compose up --build
+    ```
