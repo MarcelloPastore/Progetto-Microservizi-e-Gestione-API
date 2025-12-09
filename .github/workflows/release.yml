@@ -1,0 +1,50 @@
+name: Create Release on Version Update
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-release:
+    # Esegue il job se il messaggio contiene "update" (case-insensitive) e un pattern di versione
+    if: contains(github.event.head_commit.message, 'update') || contains(github.event.head_commit.message, 'Update')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Extract Version from Commit Message
+      id: get_version
+      run: |
+        COMMIT_MSG="${{ github.event.head_commit.message }}"
+        echo "Commit message: $COMMIT_MSG"
+        # Estrae la versione (es. 1.2.3) dal messaggio
+        VERSION=$(echo "$COMMIT_MSG" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        
+        if [ -z "$VERSION" ]; then
+          echo "Error: No version number (x.y.z) found in commit message."
+          exit 1
+        fi
+        
+        echo "Detected version: $VERSION"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ env.VERSION }}
+        name: Release v${{ env.VERSION }}
+        body: |
+          Automated release triggered by version update.
+          
+          **Version**: ${{ env.VERSION }}
+          **Commit**: ${{ github.sha }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
