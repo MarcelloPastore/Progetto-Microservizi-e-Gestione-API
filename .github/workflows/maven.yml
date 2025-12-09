@@ -20,5 +20,5 @@ jobs:
         distribution: 'temurin'
         cache: 'maven'
 
-    - name: Build with Maven (Skip Tests)
-      run: mvn -B package --file pom.xml 
+    - name: Build with Maven 
+      run: mvn -B verify --file pom.xml 
