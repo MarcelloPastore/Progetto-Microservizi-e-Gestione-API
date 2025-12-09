@@ -17,7 +17,7 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
                         "- Invio e ricezione messaggi tra utenti autenticati (JWT)\n" +
                         "- Notifiche automatiche generate da eventi RabbitMQ (materiale, compiti, esami, ecc.)\n" +
                         "- Consultazione, conteggio e marcatura notifiche come lette\n" +
-                        "- Broadcast eventi a tutti gli utenti (eccetto ruolo 'teacher')\n\n" +
+                        "\n\n" +
                         "Convenzioni:\n" +
                         "- Tutti gli endpoint (eccetto /actuator e dev profile) richiedono JWT Bearer valido\n" +
                         "- Campi temporali sono in formato ISO-8601 (LocalDateTime)\n" +
