@@ -116,6 +116,13 @@
 							<goal>check</goal>
 						</goals>
 					</execution>
+					<execution>
+                    	<id>checkstyle-report</id>
+                    	<phase>verify</phase>
+                   		<goals>
+                        	<goal>checkstyle</goal>
+                    	</goals>
+                	</execution>
 				</executions>
 			</plugin>
 
@@ -134,6 +141,13 @@
 							<goal>check</goal>
 						</goals>
 					</execution>
+					<execution>
+                    	<id>spotbugs-report</id>
+                    	<phase>verify</phase>
+                    	<goals>
+                        	<goal>spotbugs</goal>
+                    	</goals>
+                	</execution>
 				</executions>
 			</plugin>
 		</plugins>
