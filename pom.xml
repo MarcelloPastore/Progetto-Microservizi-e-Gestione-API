@@ -127,28 +127,35 @@
 			</plugin>
 
 			<!-- SpotBugs Plugin -->
-			<plugin>
-				<groupId>com.github.spotbugs</groupId>
-				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.8.3.1</version>
-				<configuration>
-					<failOnError>false</failOnError>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-					<execution>
-                    	<id>spotbugs-report</id>
-                    	<phase>verify</phase>
-                    	<goals>
-                        	<goal>spotbugs</goal>
-                    	</goals>
-                	</execution>
-				</executions>
+				<plugin>
+		    		<groupId>com.github.spotbugs</groupId>
+		    		<artifactId>spotbugs-maven-plugin</artifactId>
+		    		<version>4.8.6</version>
+		    		<dependencies>
+		        <!-- Aggiorna dipendenze interne -->
+		        		<dependency>
+		            		<groupId>com.github.spotbugs</groupId>
+		            		<artifactId>spotbugs</artifactId>
+		            		<version>4.8.6</version>
+		        		</dependency>
+		    	</dependencies>
+		    	<configuration>
+		        	<effort>Min</effort>
+		        	<threshold>High</threshold>
+		        	<failOnError>false</failOnError>
+		        	<maxHeap>768</maxHeap>
+		        	<fork>true</fork>
+		        	<timeout>300000</timeout>
+		    	</configuration>
+		    	<executions>
+		        	<execution>
+		            	<id>spotbugs-check</id>
+		            	<phase>verify</phase>
+		            	<goals>
+		                	<goal>check</goal>
+		            	</goals>
+		        	</execution>
+		    	</executions>
 			</plugin>
 		</plugins>
 	</build>
