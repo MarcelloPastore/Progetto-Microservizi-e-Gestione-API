@@ -123,29 +123,36 @@
 				</executions>
 			</plugin>
 
-			<!-- SpotBugs Plugin -->
+		
 			<plugin>
-				<groupId>com.github.spotbugs</groupId>
-				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.8.3.1</version>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<version>3.21.2</version>
 				<configuration>
-					<effort>Default</effort>
-					<threshold>Medium</threshold>
-					<failOnError>false</failOnError>
-					<maxHeap>512</maxHeap>
-					<fork>true</fork>
-					<xmlOutput>true</xmlOutput>
+					<failOnViolation>false</failOnViolation>
+					<printFailingErrors>true</printFailingErrors>
+					<rulesets>
+						<ruleset>/rulesets/java/quickstart.xml</ruleset>
+					</rulesets>
 				</configuration>
 				<executions>
 					<execution>
-						<id>spotbugs</id>
+						<id>pmd-check</id>
 						<phase>verify</phase>
 						<goals>
-							<goal>spotbugs</goal>
+							<goal>check</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>pmd-report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>pmd</goal>
 						</goals>
 					</execution>
 				</executions>
 			</plugin>
+
 		</plugins>
 	</build>
 
