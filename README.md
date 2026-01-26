@@ -106,7 +106,6 @@ Questo comando eseguirà:
 - Compilazione
 - Test Unitari
 - Checkstyle (verifica stile codice Google)
-- SpotBugs (ricerca bug potenziali)
 - PMD (analisi qualità codice)
 - JaCoCo (report coverage in `target/site/jacoco/index.html`)
 
